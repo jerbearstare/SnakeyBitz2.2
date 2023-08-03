@@ -1,0 +1,18 @@
+ou5:05 PM
+b'<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" height="195" width="195" class="pyqrcode"><path transform="scale(3)" stroke="#000" class="pyqrline" d="M4 4.5h7m2 0h4m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m2 0h1m2 0h3m1 0h2m1 0h1m2 0h2m2 0h3m1 0h2m2 0h7m-57 1h1m5 0h1m2 0h1m5 0h3m3 0h2m1 0h2m1 0h1m3 0h2m1 0h2m3 0h1m1 0h1m5 0h1m2 0h1m5 0h1m-57 1h1m1 0h3m1 0h1m2 0h1m1 0h2m1 0h1m1 0h4m1 0h1m3 0h3m1 0h1m3 0h1m3 0h1m2 0h3m3 0h2m2 0h1m1 0h3m1 0h1m-57 1h1m1 0h3m1 0h1m2 0h1m1 0h3m
+Jacobus Badenhorst5:21 PM
+# -*- coding: utf-8 -*-
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPM
+
+drawing = svg2rlg('./lock.svg')
+renderPM.drawToFile(drawing, './after.png', fmt='PNG')
+pip3 install svglib
+Jacobus Badenhorst5:30 PM
+python3 -m venv env
+source env/bin/activate
+Jacobus Badenhorst5:51 PM
+svg_string[svg_string.find('<svg)::]
+svg_string[svg_string.find('<svg')::]
+Jacobus Badenhorst5:53 PM
+svg_string[svg_string.find('<svg'):svg_string.find('\n')]

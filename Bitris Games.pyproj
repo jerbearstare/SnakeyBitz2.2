@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{e689ee4f-9c5e-4189-baf3-9ff597e75a26}</ProjectGuid>
+    <ProjectHome />
+    <StartupFile>snake-windows.py</StartupFile>
+    <SearchPath />
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId>MSBuild|env|$(MSBuildProjectFullPath)</InterpreterId>
+    <TestFramework>Pytest</TestFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="doctored_full_cabinet.jpg" />
+    <Content Include="history.txt" />
+    <Content Include="oldhistory.txt" />
+    <Content Include="pi-bin\chatwithkobus.txt" />
+    <Content Include="QR.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="bin\highscore.py" />
+    <Compile Include="bin\highscore_entry.py" />
+    <Compile Include="bin\joymap_old.py" />
+    <Compile Include="joystick-test.py" />
+    <Compile Include="bin\lowpass.py" />
+    <Compile Include="bin\serial-port.py" />
+    <Compile Include="bin\serial-read.py" />
+    <Compile Include="bin\serial_read_windows.py" />
+    <Compile Include="bin\snake-ai-dev.py" />
+    <Compile Include="bin\vlt-gen-dev.py" />
+    <Compile Include="bin\vlt-gen.py" />
+    <Compile Include="joymap.py" />
+    <Compile Include="new_btc_price.py" />
+    <Compile Include="pi-bin\fixstring.py" />
+    <Compile Include="pi-bin\svg2png.py" />
+    <Compile Include="qr_test.py" />
+    <Compile Include="snake-dev.py" />
+    <Compile Include="snake-windows-dev.py" />
+    <Compile Include="snake-windows.py" />
+    <Compile Include="snake.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bin" />
+    <Folder Include="pi-bin" />
+  </ItemGroup>
+  <ItemGroup>
+    <Interpreter Include="env\">
+      <Id>env</Id>
+      <Description>env (Python 3.11 (64-bit))</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <Version>3.11</Version>
+      <Architecture>X64</Architecture>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+    </Interpreter>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+</Project>
