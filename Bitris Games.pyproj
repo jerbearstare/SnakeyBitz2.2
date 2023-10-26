@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{e689ee4f-9c5e-4189-baf3-9ff597e75a26}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>snake-windows.py</StartupFile>
+    <StartupFile>snake-windows-dev.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -27,16 +27,7 @@
     <Content Include="QR.png" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="bin\highscore.py" />
-    <Compile Include="bin\highscore_entry.py" />
-    <Compile Include="bin\joymap_old.py" />
     <Compile Include="joystick-test.py" />
-    <Compile Include="bin\lowpass.py" />
-    <Compile Include="bin\serial-port.py" />
-    <Compile Include="bin\serial-read.py" />
-    <Compile Include="bin\serial_read_windows.py" />
-    <Compile Include="bin\snake-ai-dev.py" />
-    <Compile Include="bin\vlt-gen-dev.py" />
     <Compile Include="bin\vlt-gen.py" />
     <Compile Include="joymap.py" />
     <Compile Include="new_btc_price.py" />

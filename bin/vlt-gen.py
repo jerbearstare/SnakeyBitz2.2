@@ -6,19 +6,24 @@ import json
 import random
 
 #Game Paramaters
-games = 10000
+games = 1000
 min_foods = 10
 max_foods = 100
 
 #get the price of bitcoin in Canadian Dollars
-bitcoin_api_url = "https://api.newton.co/dashboard/api/rates/"
-response = requests.get(bitcoin_api_url)
+bitcoin_api_url = "https://api.coingecko.com/api/v3/simple/price"
+parameters = {
+    "ids": "bitcoin",
+    "vs_currencies": "cad"
+}
+
+response = requests.get(bitcoin_api_url, params=parameters)
 response_json = response.json()
-btc_price = response_json['rates'][48]['spot'] #['FOLDER']['LINENUMBER']['FILTER']
+btc_price = response_json["bitcoin"]["cad"]
 #btc_price = 100000
 
 #Creating a scoring modifier depeding on the price of bitcoin for once Canadain Quarter
-price_modifier = float(btc_price)/6500
+price_modifier = float(btc_price)/8000
 sats_per_quarter = round(0.25/(float(btc_price)/100000000))
 
 # Create an array for 10 colors
@@ -33,7 +38,7 @@ color_matrix = np.zeros((10,games)) #Create a matrix to store the number of time
 
 # Create a loop to choose colors randomly from colors array and assign a point to each color
 for i in range(games): #N GAMES
-    stdDeviations = [10, 5, 1, .5, 0.1, 0.01, 0.005, 0.001, 0.0005, 0.0001]
+    stdDeviations = [10, 5, 1, .5, 0.1, 0.01, 0.005, 0.001, 0.0005, 0.0003]
     score = 0
     for i in range(random.randint(min_foods,max_foods)): #ONE GAME
         i = 0

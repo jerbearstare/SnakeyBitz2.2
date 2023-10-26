@@ -1,3 +1,14 @@
+﻿
+# ────────────────────────────────────────
+#   :::::: I M P O R T S : :  :  :  :  :
+# ────────────────────────────────────────
+# WINDOWS UI
+import os
+from tkinter import Y
+
+if not os.environ.get('XDG_RUNTIME_DIR'): #try to run on remote desktop
+    os.environ['XDG_RUNTIME_DIR'] = '/tmp' # set to temp
+
 import pygame
 import time
 import requests
@@ -6,33 +17,47 @@ import datetime
 import numpy as np
 import random
 import io
-import os
-import csv
 import serial
 
-#import Joystick controls
-from joymap import GPIO_to_Keyboard
-from events import JOY_LEFT_EVENT, JOY_RIGHT_EVENT, JOY_UP_EVENT, JOY_DOWN_EVENT, BUTTON_1_EVENT, BUTTON_2_EVENT
+# ────────────────────────────────────────
+#   :::::: C O N S T A N T S : :  :  :  :
+# ────────────────────────────────────────
 
-
-# Constants
 SCREEN_WIDTH = 1024
 SCREEN_HEIGHT = 600
 
 # GAME MECHANICS
-#statistics
 stdDeviations = [10, 5, 1, .5, 0.1, 0.01, 0.005, 0.001, 0.0005, 0.0001]
 scaler = 6500
 
+# JOYSTICK CONFIGURATION FOR SENSITIVITY
+JOYSTICK_DEBOUNCE_TIME = 0.1  # Time in seconds
+JOYSTICK_NEGATIVE_THRESHOLD = -0.5  # Replace with your desired value
+JOYSTICK_POSITIVE_THRESHOLD = 0.5   # Replace with your desired value
 
-# LNbitz API Initialization
+JOYSTICK_DEADZONE = 0.2  # Adjust this value based on how sensitive you want to make the joystick.
+
+# User events for joystick encoder
+JOY_LEFT_EVENT = pygame.USEREVENT + 1
+JOY_RIGHT_EVENT = pygame.USEREVENT + 2
+JOY_UP_EVENT = pygame.USEREVENT + 3
+JOY_DOWN_EVENT = pygame.USEREVENT + 4
+BUTTON_1_EVENT = pygame.USEREVENT + 5
+BUTTON_2_EVENT = pygame.USEREVENT + 6
+
+#Global history Variable
+HISTORY_FILE = 'history.txt'
+
+#LNBITZ
 url = "https://legend.lnbits.com/withdraw/api/v1/links"
 API_KEY_write = '4f185c43df804edbb0ab8cbad4973566'
-method_get = "get"
 write_key_header = {"X-Api-Key": API_KEY_write}
 
-# Pygame Initialization
 
+# ─────────────────────────────────
+#   :::::: P Y G A M E : :  :  :  :
+# ────────────────────────────────-
+# Pygame Initialization
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
 pygame.mouse.set_visible(False)
@@ -44,29 +69,12 @@ if __name__ == '__main__':
     Serial_channel = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
     Serial_channel.flush()
 
-# Fonts
-font_header = pygame.font.Font(os.path.join("font", "8-BIT WONDER.TTF"), 80)
-font_header.set_bold(True)
-font_subheader = pygame.font.Font(os.path.join("font", "8-BIT WONDER.TTF"), 30)
-font_subheader.set_bold(False)
-font_highscore = pygame.font.Font(os.path.join("font", "8-BIT WONDER.TTF"), 20)
-font_highscore.set_bold(False)
-font_inst = pygame.font.SysFont('gill sans', 30, bold=False)
-font_inst1 = pygame.font.SysFont('gill sans', 15, bold=False)
-font_score = pygame.font.Font('font/8-BIT WONDER.TTF', 40)
-font_score.set_bold(True)
-
-# Initial variables
-scaler = 6500 #tweek the game mechanics player over house based upon sats per quarter.
-counter = 0
-running = True
-highest_score = 0
-credits = 0 
-history_file = 'history.txt'
+# ────────────────────────────────────────────────
+#   :::::: H E L P E R   F U N C T I O N S : :  :
+# ────────────────────────────────────────────────
 
 
-# Function for calling BTC price
-def get_bitcoin_price_in_cad():
+def get_bitcoin_price_in_cad(): # Function for calling BTC price
     bitcoin_api_url = "https://api.coingecko.com/api/v3/simple/price"
     parameters = {
         "ids": "bitcoin",
@@ -76,8 +84,9 @@ def get_bitcoin_price_in_cad():
     response = requests.get(bitcoin_api_url, params=parameters)
     response_json = response.json()
     btc_price = response_json["bitcoin"]["cad"]
+    response.close()
     return btc_price
-# Function for Reading Coins
+
 def check_coin_inserted(Serial_channel, previousBank):  # Nested function to check if a coin has been inserted
     if Serial_channel.in_waiting > 0:  # Check if there are bytes to read from the serial channel
         b = Serial_channel.readline()  # Read a line from the serial channel
@@ -86,77 +95,209 @@ def check_coin_inserted(Serial_channel, previousBank):  # Nested function to che
         if float(ardBank) > previousBank:  # Check if the bank balance has increased, indicating a coin insertion
             return True  # Return True if a coin has been inserted
     return False  # Return False if no coin has been inserted
-# All your class declarations...
-class StartMenuState:
+
+def render_text(text, size, color, x, y, font_type='8-bit', bold=False):
+    """Function to render and blit text on the screen"""
+    if font_type == '8-bit':
+        font = pygame.font.Font(os.path.join("font", "8-BIT WONDER.TTF"), size)
+    else:  # gill sans
+        font = pygame.font.SysFont('gill sans', size)
+    
+    font.set_bold(bold)
+    text_surface = font.render(text, True, color)
+    screen.blit(text_surface, (x - text_surface.get_width() // 2, y - text_surface.get_height() // 2))
+
+# ─────────────────────────────────────────────
+#   :::::: H E L P E R   C L A S S E S : :  :
+# ─────────────────────────────────────────────
+
+class JoystickManager:
     def __init__(self):
-        self.joystick = GPIO_to_Keyboard()
-        self.history_file = 'history.txt'
-        self.score_values = []
-        self.initials = ""
-        self.highest_score = 0
-        self.header = font_header.render('SnakeyBitz', True, (255, 215, 0))
-        self.subheader = font_subheader.render('Insert dirty fiat to win BTC', True, (255, 255, 255), pygame.BLEND_RGB_ADD)
-        self.highscore_header = font_highscore.render('', True, (255, 215, 0))
-        self.process_history_file()
+        pygame.joystick.init()
+        self.joystick = pygame.joystick.Joystick(0) if pygame.joystick.get_count() > 0 else None
+        if self.joystick:
+            self.joystick.init()
+        self.last_horizontal = 0
+        self.last_vertical = 0
+        self.last_event_time = None
+
+    def handle_joystick_events(self, events):
+        if not self.joystick:
+            return
+
+        # Only use event-based axis values
+        horizontal_axis = 0
+        vertical_axis = 0
+
+        for event in events:
+            if event.type == pygame.JOYAXISMOTION:
+                if event.axis == 0:  # X-axis
+                    if abs(event.value) >= JOYSTICK_DEADZONE:
+                        horizontal_axis = event.value
+                elif event.axis == 1:  # Y-axis
+                    if abs(event.value) >= JOYSTICK_DEADZONE:
+                        vertical_axis = event.value
+
+            # BUTTON EVENTS
+            elif event.type == pygame.JOYBUTTONDOWN:
+                if event.button == 0:
+                    pygame.event.post(pygame.event.Event(BUTTON_1_EVENT))
+                elif event.button == 1:
+                    pygame.event.post(pygame.event.Event(BUTTON_2_EVENT))
+
+        current_time = time.time()
+
+        # Check if the joystick has moved a significant amount since the last event
+        significant_horizontal_move = abs(horizontal_axis - self.last_horizontal) > 2 * JOYSTICK_DEADZONE
+        significant_vertical_move = abs(vertical_axis - self.last_vertical) > 2 * JOYSTICK_DEADZONE
+
+        if significant_horizontal_move or significant_vertical_move or self.last_event_time is None or current_time - self.last_event_time > JOYSTICK_DEBOUNCE_TIME:
+            # Handle left/right movement
+            if horizontal_axis < (JOYSTICK_NEGATIVE_THRESHOLD - JOYSTICK_DEADZONE):
+                pygame.event.post(pygame.event.Event(JOY_LEFT_EVENT))
+                self.last_event_time = current_time
+                print(f"[DEBUG - {datetime.datetime.now()}] LEFT event fired!")
+            elif horizontal_axis > (JOYSTICK_POSITIVE_THRESHOLD + JOYSTICK_DEADZONE):
+                pygame.event.post(pygame.event.Event(JOY_RIGHT_EVENT))
+                self.last_event_time = current_time
+
+            # Handle up/down movement
+            if vertical_axis < (JOYSTICK_NEGATIVE_THRESHOLD - JOYSTICK_DEADZONE):
+                pygame.event.post(pygame.event.Event(JOY_UP_EVENT))
+                self.last_event_time = current_time
+            elif vertical_axis > (JOYSTICK_POSITIVE_THRESHOLD + JOYSTICK_DEADZONE):
+                pygame.event.post(pygame.event.Event(JOY_DOWN_EVENT))
+                self.last_event_time = current_time
+
+        self.last_horizontal = horizontal_axis
+        self.last_vertical = vertical_axis
+
+    def reset_joystick(self):
+        self.last_horizontal = 0
+        self.last_vertical = 0
+        self.last_event_time = None
+
+    def cleanup(self):
+        if self.joystick:
+            self.joystick.quit()
+
+# ──────────────────────────────────────────────────────────────
+#   :::::: G A M E    S T A T E   C L A S S E S : :  :  :  :  :
+# ──────────────────────────────────────────────────────────────
+
+class ScreensaverState:
+    def __init__(self, scores):
+        self.scores = scores
+        self.enter_time = pygame.time.get_ticks()
+        self.joystick_manager = JoystickManager()
 
     def handle_events(self, events):
-        global credits
         for event in events:
-            if event.type == BUTTON_1_EVENT and credits > 0:
-                btc_price = get_bitcoin_price_in_cad()
-                return GameLoopState(self.highest_score, btc_price)
+            self.joystick_manager.handle_joystick_events(events)
+            if event.type in [JOY_LEFT_EVENT, JOY_RIGHT_EVENT, JOY_UP_EVENT, JOY_DOWN_EVENT, BUTTON_1_EVENT, BUTTON_2_EVENT]:
+                return StartMenuState()
         return self
 
     def update(self):
+        if pygame.time.get_ticks() - self.enter_time > 30000:  # 10 seconds
+            return StartMenuState()
+        return self
+
+    def render(self):
+        screen.fill((0, 0, 0))  # Filling with black background
+        render_text('TOP HIGHSCORES', 70, (255, 215, 0), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 220)
+        y_offset = SCREEN_HEIGHT // 3  # Starting y position
+    
+        for idx, score_data in enumerate(self.scores[:10]):  # Only take the top 10 scores
+            food, score, initials = score_data
+            # aligning score, food, and initials to the center of their max width
+            score_text = f"{score:^6} Sats"
+            food_text = f"No.Food {food:^7}"
+            initials_text = f"{initials:^4}"
+        
+            # Adjusting the padding around the first "|", making it larger
+            text = f"{idx+1}. {score_text}     |     {food_text}   |   {initials_text}"
+            render_text(text, 30, (255, 215, 0), SCREEN_WIDTH/2, y_offset, "gill sans", True)
+            y_offset += 40  # Move down for the next line
+        
+    pygame.display.flip()
+        
+    pygame.display.flip()
+
+class StartMenuState:
+    def __init__(self):
+        self.score_values = []
+        self.initials = ""
+        self.highest_score = 0
+        self.HISTORY_FILE = 'history.txt'  # Added this line to set the path of the history file
+        self.last_switch_time_for_color = pygame.time.get_ticks()
+        self.last_switch_time_for_state = pygame.time.get_ticks()
+        self.switch_duration = 500
+        self.color_state = True
+        self.joystick_manager = JoystickManager()
+    
+    def enter_state(self):
+        # Clear out all old events to prevent unwanted triggers
+        self.joystick_manager.reset_joystick()
+
+    def handle_events(self, events):
+        global credits
+        self.joystick_manager.handle_joystick_events(events)
+        for event in events:  # Iterate over each event in the list
+            if event.type == BUTTON_1_EVENT:
+                if credits > 0:
+                    btc_price = get_bitcoin_price_in_cad()
+                    return GameLoopState(self.highest_score, btc_price)
+        return self
+
+    def update(self): #contains timer for screensaver switch time
+        if pygame.time.get_ticks() - self.last_switch_time_for_state > 10000:  # 3 minutes = 180000 ticks || screensaver switch time
+            scores = self.get_top_scores()
+            return ScreensaverState(scores)
         pass
 
-    def process_history_file(self):
-        with open(self.history_file, 'r') as file:
-            reader = csv.reader(file)
-            for row in reader:
+    def get_top_scores(self):
+        scores = []
+        with open(self.HISTORY_FILE, 'r') as file:
+            for line in file:
+                row = line.strip().split(",")
+                food = int(row[0])
                 score = int(row[2])
-                initials = row[15]
-                
-                if score > self.highest_score:
-                    self.highest_score = score
-                    self.initials = initials.strip()
+                initials = row[-1].strip()
+                scores.append((food, score, initials))
+        scores.sort(key=lambda x: x[1], reverse=True)  # Sort by score in descending order
+        return scores
 
     def render(self):
         screen.fill((0, 0, 0))  # Clear the screen
-        # Render screen
+    
+        # Checking elapsed time for color switching
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_switch_time_for_color > self.switch_duration:
+            self.color_state = not self.color_state
+            self.last_switch_time_for_color = current_time
 
-        credit_text = font_inst.render(f"Credits: {credits}", True, (255, 255, 255))
-        screen.blit(credit_text, (SCREEN_WIDTH//2 - credit_text.get_width()//2, 10))
+        # Choose color based on self.color_state
+        if self.color_state:
+            subheader_color = (255, 255, 255)
+        else:
+            subheader_color = (200, 200, 200)
 
-        if self.initials:
-            highscore_text = 'HIGHSCORE         ' + self.initials + ' . ' + str(self.highest_score) + ' SATS'
-            highscore_header = font_highscore.render(highscore_text, True, (255, 215, 0))
-            screen.blit(highscore_header, (SCREEN_WIDTH/2 - highscore_header.get_width()/2, SCREEN_HEIGHT/2 - highscore_header.get_height()/2 + 60))
-            
-        screen.blit(self.header, (SCREEN_WIDTH/2 - self.header.get_width()/2, SCREEN_HEIGHT/2 - self.header.get_height()/2 - 50))
-        screen.blit(self.subheader, (SCREEN_WIDTH/2 - self.subheader.get_width()/2, SCREEN_HEIGHT/2 - self.subheader.get_height()/2 + 20))
+        # Rendering texts using the helper function
+        render_text('SnakeyBitz', 80, (255, 215, 0), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 50)
+        render_text('Insert 25 cents to win Bitcoin', 30, subheader_color, SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 20)  # Adjusted font size
+        render_text(f"Credits: {credits}", 30, (255, 255, 255), SCREEN_WIDTH//2, 30, 'gill sans')
+        render_text("Instructions below to set up a lightning wallet before playing", 20, (255, 255, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 60, 'gill sans')
+        render_text("18+ Please Gamble Responsibly", 30, (255, 255, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT - 30, 'gill sans', True)  # Adjusted position
+
+        #if self.initials:
+            #highscore_text = 'HIGHSCORE  ' + self.initials + '   ' + str(self.highest_score)
+            #render_text(highscore_text, 20, (255, 215, 0), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 60, "gill sans", True)  # Adjusted font size
         
         pygame.display.update()
-        pygame.time.delay(500)
-        
-        self.subheader = font_subheader.render('Insert dirty fiat to win BTC', True, (200, 200, 200), pygame.BLEND_RGB_ADD)
-        screen.blit(self.subheader, (SCREEN_WIDTH/2 - self.subheader.get_width()/2, SCREEN_HEIGHT/2 - self.subheader.get_height()/2 + 20))
-        
-        pygame.display.update()
-        pygame.time.delay(500)
-        
-        self.subheader = font_subheader.render('Insert dirty fiat to win BTC', True, (255, 255, 255), pygame.BLEND_RGB_ADD)
-        screen.blit(self.subheader, (SCREEN_WIDTH/2 - self.subheader.get_width()/2, SCREEN_HEIGHT/2 - self.subheader.get_height()/2 + 20))
 
-        pygame.display.update()
-
-class GameLoopState:
-    def draw_snake(self, snake_list, snake_size):
-        for xy in snake_list:
-            pygame.draw.rect(screen, self.GREEN, (xy[0], xy[1], snake_size, snake_size))
-
+class GameLoopState: 
     def __init__(self, highest_score, btc_price):
-        self.joystick = GPIO_to_Keyboard()
         self.highest_score = highest_score
         self.gmech_modifier = float(btc_price)/scaler
         self.btc_price = btc_price
@@ -171,6 +312,7 @@ class GameLoopState:
         self.PURPLE = (128, 0, 128)
         self.BROWN = (165, 42, 42)
         self.GOLD = (255, 215, 0)
+        self.joystick_manager = JoystickManager()
 
         self.score = 5
 
@@ -200,25 +342,46 @@ class GameLoopState:
 
         self.clock = pygame.time.Clock()
 
+    def enter_state(self):
+        pygame.event.clear()
 
     def handle_events(self, events):
+        self.joystick_manager.handle_joystick_events(events)
         for event in events:
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                return None
-            elif event.type == JOY_LEFT_EVENT:
+            if event.type == JOY_LEFT_EVENT and not self.x_change > 0:
                 self.x_change = -self.snake_size
                 self.y_change = 0
-            elif event.type == JOY_RIGHT_EVENT:
+                print(f"[DEBUG - {datetime.datetime.now()}] LEFT event received in GAMELOOPState!")
+            elif event.type == JOY_RIGHT_EVENT and not self.x_change < 0:
                 self.x_change = self.snake_size
                 self.y_change = 0
-            elif event.type == JOY_UP_EVENT:
+                print("RIGHT from GameLoopState")
+            elif event.type == JOY_UP_EVENT and not self.y_change > 0:
                 self.y_change = -self.snake_size
                 self.x_change = 0
-            elif event.type == JOY_DOWN_EVENT:
+                print("UP from GameLoopState")
+            elif event.type == JOY_DOWN_EVENT and not self.y_change < 0:
                 self.y_change = self.snake_size
                 self.x_change = 0
+
+            if (
+            self.x_position > SCREEN_WIDTH
+            or self.x_position < 0
+            or self.y_position > SCREEN_HEIGHT
+            or self.y_position < 0
+            or [self.x_position, self.y_position] in self.snake_list[:-1]
+
+            ):
+                if self.score > self.highest_score:
+                    return HighScoreState(self.score, self.color_matrix, self.btc_price, self.counter)
+                else:
+                    return GameOverState(self.score, self.color_matrix, self.btc_price, self.counter)
+
         return self
+
+    def draw_snake(self, snake_list, snake_size):
+        for xy in snake_list:
+            pygame.draw.rect(screen, self.GREEN, (xy[0], xy[1], snake_size, snake_size))
 
     def update(self):
         self.x_position += self.x_change
@@ -266,21 +429,6 @@ class GameLoopState:
         if len(self.snake_list) > self.snake_length:
             del self.snake_list[0]
 
-        if (
-            self.x_position > SCREEN_WIDTH
-            or self.x_position < 0
-            or self.y_position > SCREEN_HEIGHT
-            or self.y_position < 0
-            or [self.x_position, self.y_position] in self.snake_list[:-1]
-        ):
-            if self.score > self.highest_score:
-                return HighScoreState(self.score, self.color_matrix, self.btc_price, self.counter)
-            else:
-                return GameOverState(self.score, self.color_matrix, self.btc_price, self.counter)
-        return self
-
-
-
     def render(self):
         screen.fill(self.BLACK)
         self.draw_snake(self.snake_list, self.snake_size)  # Here we call the draw_snake() method
@@ -293,122 +441,99 @@ class GameLoopState:
 
 class HighScoreState:
     def __init__(self, score, color_matrix, btc_price, counter):
-        self.joystick = GPIO_to_Keyboard()
-        self.btc_price = btc_price
-        self.counter = counter
-        self.FONT_SIZE = 100
-        self.score = score
-        self.color_matrix = color_matrix
-        self.font = pygame.font.Font(os.path.join("font", "8-BIT WONDER.TTF"), self.FONT_SIZE)
-        self.font.set_bold(True)
-        self.MAX_CHARS = 3
-        self.input_box_rect = pygame.Rect(SCREEN_WIDTH // 2 - self.FONT_SIZE * self.MAX_CHARS // 2 + 0, (SCREEN_HEIGHT+100) // 2 - self.FONT_SIZE // 2, self.FONT_SIZE * self.MAX_CHARS, self.FONT_SIZE)
-        self.input_text = ["A", "A", "A"]
-        self.cursor_pos = 0
-        self.letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        self._btc_price = btc_price
+        self._counter = counter
+        self._score = score
+        self._color_matrix = color_matrix
+        self._MAX_CHARS = 3
+        self._input_box_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100 * self._MAX_CHARS // 2 + 0,
+                                           (SCREEN_HEIGHT + 100) // 2 - 100 // 2,
+                                           100 * self._MAX_CHARS, 100)
+        self._input_text = ["A", "A", "A"]
+        self._cursor_pos = 0
+        self._letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        self.player_name = ""
+        self.cursor_position = 0
+        self.joystick_manager = JoystickManager()
 
-        # Highscore and Instructions Header
-        self.font_high_score_text = pygame.font.Font('font/8-BIT WONDER.TTF', self.FONT_SIZE)
-        self.font_high_score_text.set_bold(True)
-        self.high_score_text = self.font_high_score_text.render('HIGH SCORE', True, (255, 215, 0))
-        self.font_white_button_text1 = pygame.font.SysFont('gill sans', 15)
-        self.font_white_button_text1.set_bold(False)
-        self.white_button_text_display1 = self.font_white_button_text1.render('press white button to continue', True, (255, 255, 255))
+    def enter_state(self):
+        # Clear out all old events to prevent unwanted triggers
+        pygame.event.clear()
+        self.joystick_manager.reset_joystick()
 
     def handle_events(self, events):
+        self.joystick_manager.handle_joystick_events(events)
         for event in events:
             if event.type == BUTTON_1_EVENT:
-                name = "".join(self.input_text)
-                # Save the high score and exit
-                with open(history_file, 'a') as file:
-                    file.write(f"{datetime.datetime.now()},{name},{self.score}\n")
-                return GameOverState(self.score, self.color_matrix, self.btc_price, self.counter)
-            elif event.type == JOY_LEFT_EVENT:
-                # Move the cursor to the left
-                self.cursor_pos = max(0, self.cursor_pos - 1)
-                time.sleep(.2)
-            elif event.type == JOY_RIGHT_EVENT:
-                # Move the cursor to the right
-                self.cursor_pos = min(self.MAX_CHARS - 1, self.cursor_pos + 1)
-                time.sleep(.2)
-            elif event.type == JOY_UP_EVENT:
-                # Move to the previous letter
-                index = self.letters.find(self.input_text[self.cursor_pos])
-                index = (index - 1) % len(self.letters)
-                self.input_text[self.cursor_pos] = self.letters[index]
-                time.sleep(.1)
-            elif event.type == JOY_DOWN_EVENT:
-                # Move to the next letter
-                index = self.letters.find(self.input_text[self.cursor_pos])
-                index = (index + 1) % len(self.letters)
-                self.input_text[self.cursor_pos] = self.letters[index]
-                time.sleep(.1)
+                name = "".join(self._input_text)
+                return GameOverState(self._score, self._color_matrix, self._btc_price, self._counter, name)
+            elif event.type in [JOY_LEFT_EVENT, JOY_RIGHT_EVENT, JOY_UP_EVENT, JOY_DOWN_EVENT]:
+                self._handle_joy_events(event.type)
         return self
 
-
+    def _handle_joy_events(self, event_type):
+        if event_type == JOY_LEFT_EVENT:
+            self._cursor_pos = max(0, self._cursor_pos - 1)
+        elif event_type == JOY_RIGHT_EVENT:
+            self._cursor_pos = min(self._MAX_CHARS - 1, self._cursor_pos + 1)
+        elif event_type in [JOY_UP_EVENT, JOY_DOWN_EVENT]:
+            index = self._letters.find(self._input_text[self._cursor_pos])
+            index = (index + (-1 if event_type == JOY_UP_EVENT else 1)) % len(self._letters)
+            self._input_text[self._cursor_pos] = self._letters[index]
+        time.sleep(0.2 if event_type in [JOY_LEFT_EVENT, JOY_RIGHT_EVENT] else 0.1)
 
     def update(self):
         return self
 
-
     def render(self):
         screen.fill((0, 0, 0))
-        input_text_surface = self.font.render("".join(self.input_text), True, (255, 255, 255))
-        cursor_rect = pygame.Rect(self.input_box_rect.x + self.cursor_pos * self.FONT_SIZE, self.input_box_rect.y + 5, 2, self.FONT_SIZE)
+        
+        # Use centralized text generation function
+        render_text('HIGH SCORE', 100, (255, 215, 0), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 220)
+        render_text('Hold Yellow to Continue', 15, (255, 215, 0), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 280)
+        
+        input_text_surface = pygame.font.Font(os.path.join("font", "8-BIT WONDER.TTF"), 100).render("".join(self._input_text), True, (255, 255, 255))
+        cursor_rect = pygame.Rect(self._input_box_rect.x + self._cursor_pos * 100, self._input_box_rect.y + 5, 2, 100)
         pygame.draw.rect(input_text_surface, (255, 255, 255), cursor_rect)
-
-        # Rendering High Score Header
-        screen.blit(self.high_score_text, (SCREEN_WIDTH/2 - self.high_score_text.get_width()/2, SCREEN_HEIGHT/2 - self.high_score_text.get_height()/2-220))
-
-        # Rendering Instructions
-        screen.blit(self.white_button_text_display1, (SCREEN_WIDTH/2 - self.white_button_text_display1.get_width()/2, SCREEN_HEIGHT/2 - self.white_button_text_display1.get_height()/2+280))
-
-        screen.blit(input_text_surface, (self.input_box_rect.x + 5, self.input_box_rect.y + 5))
-
-        pygame.display.update()
+        screen.blit(input_text_surface, (self._input_box_rect.x + 5, self._input_box_rect.y + 5))
 
 class GameOverState:
-    TIMER_EVENT = pygame.USEREVENT + 1  # Create a new event type
+    TIMER_EVENT = pygame.USEREVENT + 7  # Create a new event type
 
-
-    def __init__(self, score, color_matrix, btc_price, counter):
-        self.joystick = GPIO_to_Keyboard()
-        self.gameover_count = 50
+    def __init__(self, score, color_matrix, btc_price, counter, initials="XXX"):
+        self.gameover_count = 100
         self.score = score
         self.btc_price = btc_price
         self.color_matrix = color_matrix
         self.gameover = True
         self.ran_once = False
-        self.counter = counter  # If 'counter' is necessary in your code
-        self.btc_price = btc_price  # Replace with actual btc_price value
-        self.SCREEN_WIDTH = SCREEN_WIDTH  # Reference to the constant
+        self.counter = counter
+        self.SCREEN_WIDTH = SCREEN_WIDTH
         self.SCREEN_HEIGHT = SCREEN_HEIGHT
         self.withdraw_id = None
-        self.speed = 6
-
+        self.initials = initials
+        self.joystick_manager = JoystickManager()
+      
         pygame.time.set_timer(self.TIMER_EVENT, 1000)  # Start a timer that fires every second
 
+    def enter_state(self):
+        # Clear out all old events to prevent unwanted triggers
+        pygame.event.clear()
+        self.joystick_manager.reset_joystick()
+
     def handle_events(self, events):
+        self.joystick_manager.handle_joystick_events(events)
         for event in events:
-            if event.type == pygame.QUIT:
-                # Handle quit event here
-                pass
-            elif event.type == BUTTON_1_EVENT:
-                # If Button 1 is pressed, return to the Start Menu state
-                return StartMenuState()  # Assuming you have a class called StartMenuState
+            if event.type == BUTTON_1_EVENT:
+                return StartMenuState()
             elif event.type == BUTTON_2_EVENT:
-                # If Button 2 is pressed, reduce the counter by 5
                 self.gameover_count -= 5
-                if self.gameover_count  <= 0:
-                    # If counter reaches zero, return to the Start Menu state
-                    return StartMenuState()  # Assuming you have a class called StartMenuState
-            elif event.type == self.TIMER_EVENT:  # Add a handler for the timer event
+            elif event.type == self.TIMER_EVENT:
                 self.gameover_count -= 1
                 if self.gameover_count <= 0:
                     return StartMenuState()
 
         return self
-
 
     def make_api_call(self, url, write_key_header):
         create_payload = {
@@ -427,15 +552,26 @@ class GameOverState:
         self.withdraw_id = json_data['id']
         print(self.withdraw_id)
 
-
     def log_player(self):
-        with open('history.txt', 'a') as open_history: 
-            open_history.write(f"{self.counter}, {self.withdraw_id}, {self.score}, {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}, ${self.btc_price}, {self.color_matrix}, XXX\n")
+        with open(HISTORY_FILE, 'a') as open_history: 
+            open_history.write(f"{self.counter}, {self.withdraw_id}, {self.score}, {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}, ${self.btc_price}, {self.color_matrix}, {self.initials}\n")
             open_history.flush()  # Explicitly flush the buffer after each write
 
-    def center_blit(self, screen, text, y_offset=0):
-        """Render the text and blit it at the center of the screen with a y_offset"""
-        screen.blit(text, (self.SCREEN_WIDTH/2 - text.get_width()/2, self.SCREEN_HEIGHT/2 - text.get_height()/2 + y_offset))
+    def prepare_and_display_qr(self):
+        # Fetch the QR code if it hasn't been fetched already
+        if not hasattr(self, 'imgQR'):
+            svg_url = "https://legend.lnbits.com/withdraw/img/{}".format(self.withdraw_id)
+            svg_string = requests.get(svg_url).content
+            with io.BytesIO(svg_string) as f:
+                parsed_image = pygame.image.load(f, 'RGBA')
+            converted_image = parsed_image.convert_alpha()
+            pygame.image.save(converted_image, 'QR.png')
+            self.imgQR = pygame.image.load('QR.png')
+
+        shift_qr_vert = 130
+        white_square = pygame.Rect(self.SCREEN_WIDTH/2 - self.imgQR.get_width()/2, self.SCREEN_HEIGHT/2 - self.imgQR.get_height()/2 + shift_qr_vert, 195, 195)
+        pygame.draw.rect(screen, (255, 255, 255), white_square)
+        screen.blit(self.imgQR, (self.SCREEN_WIDTH/2 - self.imgQR.get_width()/2, self.SCREEN_HEIGHT/2 - self.imgQR.get_height()/2 + shift_qr_vert))
 
     def update(self, url, write_key_header):
         if self.gameover and not self.ran_once:
@@ -445,103 +581,69 @@ class GameOverState:
             self.ran_once = True
 
     def render(self):
-            # Fill the screen
+        # 1. Clear the screen
         screen.fill((0, 0, 0))
+    
+        # 2. Game Over and Play Again
+        render_text('Game Over', 80, (255, 215, 0), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 220, '8-bit', True)
+        render_text('Scan QR Code with lightning wallet to collect Winnings', 30, (255, 255, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2, 'gill sans', True)
+        render_text(f"Credits: {credits}", 15, (255, 255, 255), SCREEN_WIDTH//2, 30, 'gill sans')
 
-        # Initialize pygame font
-        pygame.font.init()
+        # 3. Display score
+        render_text('Your Score ' + str(self.score), 40, (255, 255, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 150, '8-bit', True)
 
-        # Render and blit each text in the center
-        font_game_over = pygame.font.Font('font/8-BIT WONDER.TTF', 80)
-        font_game_over.set_bold(True)
-        game_over = font_game_over.render('Game Over', True, (255, 215, 0))
-        self.center_blit(screen, game_over, -220)
+        # 4. Display QR Code and instructions
+        if self.withdraw_id is not None:
+            render_text('Hold Yellow to play Again', 25, (255, 215, 0), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 35, 'gill sans', True)
+            render_text('Your ID ' + str(self.withdraw_id), 30, (255, 255, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 100, 'gill sans', True)
+            self.prepare_and_display_qr()
 
-        score_display = font_score.render('Your Score ' + str(self.score), True, (255, 255, 255))
-        self.center_blit(screen, score_display, -150)
-
-        font_play_again = pygame.font.SysFont('gill sans', 30)
-        font_play_again.set_bold(True)
-
-
-
-        play_again_display = font_play_again.render('Insert Coin to Play Again or White Button for Menu ', True, (255, 255, 255))
-        self.center_blit(screen, play_again_display, 0)
-
-        if self.withdraw_id is not None:  # Ensure withdraw_id is not None before using
-            font_id = pygame.font.SysFont('gill sans', 20)
-            font_id.set_bold(True)
-            id_display = font_id.render('Your Game ID ' + self.withdraw_id, True, (255, 255, 255))
-            self.center_blit(screen, id_display, 250)
-
-            # Prepare the QR code
-            svg_url = "https://legend.lnbits.com/withdraw/img/{}".format(self.withdraw_id)
-            svg_string = requests.get(svg_url).content
-            with io.BytesIO(svg_string) as f:
-                parsed_image = pygame.image.load(f, 'RGBA')
-            converted_image = parsed_image.convert_alpha()
-            pygame.image.save(converted_image, 'QR.png')
-
-            # Display QR code
-            shift_qr_vert = 130
-            imgQR = pygame.image.load('QR.png')
-            white_square = pygame.Rect(self.SCREEN_WIDTH/2 - imgQR.get_width()/2, self.SCREEN_HEIGHT/2 - imgQR.get_height()/2 + shift_qr_vert, 195,195) #white square
-            pygame.draw.rect(screen, (255, 255, 255), white_square)
-            screen.blit(imgQR, (self.SCREEN_WIDTH/2 - imgQR.get_width()/2, self.SCREEN_HEIGHT/2 - imgQR.get_height()/2 + shift_qr_vert))
-
-        gameover_count_font = pygame.font.SysFont('gill sans', 35, bold=True)
-        gameover_count = gameover_count_font.render(str(self.gameover_count), True, (255, 255, 255))
-        screen.blit(gameover_count, (SCREEN_WIDTH/2 - gameover_count.get_width()/2+480, SCREEN_HEIGHT/2 - gameover_count.get_height()/2 - 270))
-
-        inst_display = font_inst.render('Scan QR code with lightning wallet to collect winnings', True, (255, 215, 0))
-        inst_display1 = font_inst1.render('visit legend.lnbits.com to create a wallet. IF ERROR OCCURS SEND GAME ID to Twitter/Email support.', True, (255, 255, 255))
-        self.center_blit(screen, inst_display, -40)
-        self.center_blit(screen, inst_display1, 280)
-
-        credit_text = font_inst1.render(f"Credits: {credits}", True, (255, 255, 255))
-        screen.blit(credit_text, (SCREEN_WIDTH//2 - credit_text.get_width()//2, 10))
+        # 5. Display error message
+        render_text('visit legend.lnbits.com to create a wallet. IF ERROR OCCURS SEND GAME ID to Twitter/Email support.', 20, (255, 255, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 280, 'gill sans')
 
         # Update the screen
         pygame.display.update()
-        clock.tick(self.speed)
 
- 
+# ──────────────────────────────────────────
+#   :::::: M A I N   L O O P  : :  :  :  :  :
+# ──────────────────────────────────────────
+
+running = True
+
 def run_game(Serial_channel):
     global running, credits
+
+    FPS = 60  # adjust the frame rate
+    credits = 0
     previousBank = 0  # initialize previousBank with an appropriate value
     current_state = StartMenuState()
 
+    clock = pygame.time.Clock()  # Initialize the clock
+
     while running:
         events = pygame.event.get()
+
         for event in events:
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == JOY_LEFT_EVENT:
-                print("LEFT")
-            elif event.type == JOY_RIGHT_EVENT:
-                print("RIGHT")
-            elif event.type == JOY_UP_EVENT:
-                print("UP")
-            elif event.type == JOY_DOWN_EVENT:
-                print("DOWN")
-            elif event.type == BUTTON_1_EVENT:
-                print("BUTTON 1")
-            elif event.type == BUTTON_2_EVENT:
-                print("BUTTON 2")
 
         # Check if a coin has been inserted
         coin = check_coin_inserted(Serial_channel, previousBank)
         if coin:
             credits += 1  # Increase credits by one when a coin is inserted
+        
+        #
 
-        next_state = current_state.handle_events(events)
-        if next_state is None:
-            break
-        else:
-            current_state = next_state
-
+        # State Management
+        new_state = current_state.handle_events(events)
+        if new_state is not current_state:
+            current_state = new_state
+            while pygame.event.get():
+                pass
+            current_state.enter_state()
+        
         if isinstance(current_state, GameOverState):
-            update_state = current_state.update(url, write_key_header)  
+            update_state = current_state.update(url, write_key_header)
         else:
             update_state = current_state.update()
 
@@ -552,9 +654,11 @@ def run_game(Serial_channel):
 
         pygame.display.update()
 
+        clock.tick(FPS)  # Limit the frame rate
+    joystick_manager.cleanup() 
     Serial_channel.close()
+    pygame.joystick.quit()
     pygame.quit()
     # don't forget to close the Serial_channel when done
 
 run_game(Serial_channel)  # assuming Serial_channel is defined
-
