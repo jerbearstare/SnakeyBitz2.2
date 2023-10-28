@@ -5,7 +5,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{e689ee4f-9c5e-4189-baf3-9ff597e75a26}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>snake-windows-dev.py</StartupFile>
+    <StartupFile>
+    </StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -22,20 +23,14 @@
   <ItemGroup>
     <Content Include="doctored_full_cabinet.jpg" />
     <Content Include="history.txt" />
-    <Content Include="oldhistory.txt" />
     <Content Include="pi-bin\chatwithkobus.txt" />
     <Content Include="QR.png" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="joystick-test.py" />
     <Compile Include="bin\vlt-gen.py" />
-    <Compile Include="joymap.py" />
-    <Compile Include="new_btc_price.py" />
     <Compile Include="pi-bin\fixstring.py" />
     <Compile Include="pi-bin\svg2png.py" />
-    <Compile Include="qr_test.py" />
     <Compile Include="snake-dev.py" />
-    <Compile Include="snake-windows-dev.py" />
     <Compile Include="snake-windows.py" />
     <Compile Include="snake.py" />
   </ItemGroup>

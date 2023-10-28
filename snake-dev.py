@@ -185,45 +185,6 @@ class JoystickManager:
 #   :::::: G A M E    S T A T E   C L A S S E S : :  :  :  :  :
 # ──────────────────────────────────────────────────────────────
 
-class ScreensaverState:
-    def __init__(self, scores):
-        self.scores = scores
-        self.enter_time = pygame.time.get_ticks()
-        self.joystick_manager = JoystickManager()
-
-    def handle_events(self, events):
-        for event in events:
-            self.joystick_manager.handle_joystick_events(events)
-            if event.type in [JOY_LEFT_EVENT, JOY_RIGHT_EVENT, JOY_UP_EVENT, JOY_DOWN_EVENT, BUTTON_1_EVENT, BUTTON_2_EVENT]:
-                return StartMenuState()
-        return self
-
-    def update(self):
-        if pygame.time.get_ticks() - self.enter_time > 30000:  # 10 seconds
-            return StartMenuState()
-        return self
-
-    def render(self):
-        screen.fill((0, 0, 0))  # Filling with black background
-        render_text('TOP HIGHSCORES', 70, (255, 215, 0), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 220)
-        y_offset = SCREEN_HEIGHT // 3  # Starting y position
-    
-        for idx, score_data in enumerate(self.scores[:10]):  # Only take the top 10 scores
-            food, score, initials = score_data
-            # aligning score, food, and initials to the center of their max width
-            score_text = f"{score:^6} Sats"
-            food_text = f"No.Food {food:^7}"
-            initials_text = f"{initials:^4}"
-        
-            # Adjusting the padding around the first "|", making it larger
-            text = f"{idx+1}. {score_text}     |     {food_text}   |   {initials_text}"
-            render_text(text, 30, (255, 215, 0), SCREEN_WIDTH/2, y_offset, "gill sans", True)
-            y_offset += 40  # Move down for the next line
-        
-    pygame.display.flip()
-        
-    pygame.display.flip()
-
 class StartMenuState:
     def __init__(self):
         self.score_values = []
@@ -244,10 +205,12 @@ class StartMenuState:
         global credits
         self.joystick_manager.handle_joystick_events(events)
         for event in events:  # Iterate over each event in the list
-            if event.type == BUTTON_1_EVENT:
+            if event.type == BUTTON_1_EVENT: #yellow button
                 if credits > 0:
                     btc_price = get_bitcoin_price_in_cad()
                     return GameLoopState(self.highest_score, btc_price)
+            elif event.type == BUTTON_2_EVENT:
+                return InstructionsState()
         return self
 
     def update(self): #contains timer for screensaver switch time
@@ -290,11 +253,97 @@ class StartMenuState:
         render_text("Instructions below to set up a lightning wallet before playing", 20, (255, 255, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 60, 'gill sans')
         render_text("18+ Please Gamble Responsibly", 30, (255, 255, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT - 30, 'gill sans', True)  # Adjusted position
 
-        #if self.initials:
-            #highscore_text = 'HIGHSCORE  ' + self.initials + '   ' + str(self.highest_score)
-            #render_text(highscore_text, 20, (255, 215, 0), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 60, "gill sans", True)  # Adjusted font size
+     
         
         pygame.display.update()
+
+class ScreensaverState:
+    def __init__(self, scores):
+        self.scores = scores
+        self.enter_time = pygame.time.get_ticks()
+        self.joystick_manager = JoystickManager()
+
+    def handle_events(self, events):
+        for event in events:
+            self.joystick_manager.handle_joystick_events(events)
+            if event.type in [JOY_LEFT_EVENT, JOY_RIGHT_EVENT, JOY_UP_EVENT, JOY_DOWN_EVENT, BUTTON_1_EVENT, BUTTON_2_EVENT]:
+                return StartMenuState()
+        return self
+
+    def update(self):
+        if pygame.time.get_ticks() - self.enter_time > 30000:  # 10 seconds
+            return StartMenuState()
+        return self
+
+    def render(self):
+        screen.fill((0, 0, 0))  # Filling with black background
+        render_text('TOP HIGHSCORES', 70, (255, 215, 0), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 220)
+        y_offset = SCREEN_HEIGHT // 3  # Starting y position
+    
+        for idx, score_data in enumerate(self.scores[:10]):  # Only take the top 10 scores
+            food, score, initials = score_data
+            # aligning score, food, and initials to the center of their max width
+            score_text = f"{score:^6} Sats"
+            food_text = f"No.Food {food:^7}"
+            initials_text = f"{initials:^4}"
+        
+            # Adjusting the padding around the first "|", making it larger
+            text = f"{idx+1}. {score_text}     |     {food_text}   |   {initials_text}"
+            render_text(text, 30, (255, 215, 0), SCREEN_WIDTH/2, y_offset, "gill sans", True)
+            y_offset += 40  # Move down for the next line
+        
+    pygame.display.flip()
+        
+    pygame.display.flip()
+
+class InstructionsState:
+    def __init__(self):
+        self.joystick_manager = JoystickManager()
+        self.muun_image = pygame.image.load('muun.png')
+        self.lnbits_image = pygame.image.load('lnbits.png')
+
+    def enter_state(self):
+        pass
+        
+    def handle_events(self, events):
+        for event in events:
+            self.joystick_manager.handle_joystick_events(events)
+            # Reset to the start menu on any joystick move or button press.
+            if event.type in [JOY_LEFT_EVENT, JOY_RIGHT_EVENT, JOY_UP_EVENT, JOY_DOWN_EVENT, BUTTON_1_EVENT, BUTTON_2_EVENT]:
+                return StartMenuState()
+        return self
+
+    def update(self):
+        return self
+
+    def render(self):
+        screen.fill((0, 0, 0))  # Clear screen with black
+
+        text_x = SCREEN_WIDTH * 0.3  # 30% of the screen width
+        image_x = SCREEN_WIDTH * 0.75  # 75% of the screen width
+        muun_y = 330  # Y-coordinate for the 'Secure & Functional' section
+        lnbits_y = 80  # Y-coordinate for the 'Quick & Easy' section
+
+        # Rendering the instructions
+        render_text("How to setup Lightning Wallet", 30, (255,165,0), text_x, 30, bold=True, align="left")
+        render_text("Quick & Easy", 30, (255, 255, 255), text_x, lnbits_y, 'gill sans', bold=True, align="left")
+        render_text("1. Visit legend.lnbits.com", 25, (255, 255, 255), text_x, lnbits_y + 40, 'gill sans', align="left")
+        render_text("2. Name and create wallet", 25, (255, 255, 255), text_x, lnbits_y + 80, 'gill sans', align="left")
+        render_text("3. Save website URL of your wallet", 25, (255, 255, 255), text_x, lnbits_y + 120, 'gill sans', align="left")
+        render_text("4. Insert Quarter and enjoy Snakeybits", 25, (255, 255, 255), text_x, lnbits_y + 160, 'gill sans', align="left")
+        render_text("5. At game over, in wallet tap receive and scan QR code", 25, (255, 255, 255), text_x, lnbits_y + 200, 'gill sans', align="left")
+
+        render_text("Secure & Functional", 30, (255, 255, 255), text_x, muun_y, 'gill sans', bold=True, align="left")
+        render_text("1. Visit app store on mobile device", 25, (255, 255, 255), text_x, muun_y + 40, 'gill sans', align="left")
+        render_text("2. Download muun lightning wallet", 25, (255, 255, 255), text_x, muun_y + 80, 'gill sans', align="left")
+        render_text("3. Follow steps within muun to setup wallet", 25, (255, 255, 255), text_x, muun_y + 120, 'gill sans', align="left")
+        render_text("4. Keep seed phrase safe", 25, (255, 255, 255), text_x, muun_y + 160, 'gill sans', align="left")
+        render_text("5. Insert quarter and enjoy Snakebits", 25, (255, 255, 255), text_x, muun_y + 200, 'gill sans', align="left")
+        render_text("6. At game over, in wallet tap receive and scan QR code", 25, (255, 255, 255), text_x, muun_y + 240, 'gill sans', align="left")
+
+        # Rendering the images
+        screen.blit(self.muun_image, (image_x, muun_y))
+        screen.blit(self.lnbits_image, (image_x, lnbits_y))
 
 class GameLoopState: 
     def __init__(self, highest_score, btc_price):
