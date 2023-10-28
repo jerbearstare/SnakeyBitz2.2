@@ -250,7 +250,7 @@ class StartMenuState:
         render_text('SnakeyBitz', 80, (255, 215, 0), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 50)
         render_text('Insert 25 cents to win Bitcoin', 30, subheader_color, SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 20)  # Adjusted font size
         render_text(f"Credits: {credits}", 30, (255, 255, 255), SCREEN_WIDTH//2, 30, 'gill sans')
-        render_text("Instructions below to set up a lightning wallet before playing", 20, (255, 255, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 60, 'gill sans')
+        render_text("First time? Hole White Button for Wallet Instructions", 20, (255, 255, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 60, 'gill sans')
         render_text("18+ Please Gamble Responsibly", 30, (255, 255, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT - 30, 'gill sans', True)  # Adjusted position
 
      
@@ -319,27 +319,27 @@ class InstructionsState:
     def render(self):
         screen.fill((0, 0, 0))  # Clear screen with black
 
-        text_x = SCREEN_WIDTH * 0.3  # 30% of the screen width
-        image_x = SCREEN_WIDTH * 0.75  # 75% of the screen width
-        muun_y = 330  # Y-coordinate for the 'Secure & Functional' section
-        lnbits_y = 80  # Y-coordinate for the 'Quick & Easy' section
+        text_x = SCREEN_WIDTH * 0.2  # 30% of the screen width
+        image_x = SCREEN_WIDTH * 0.6  # 75% of the screen width
+        muun_y = 300  # Y-coordinate for the 'Secure & Functional' section
+        lnbits_y = 50  # Y-coordinate for the 'Quick & Easy' section
 
         # Rendering the instructions
-        render_text("How to setup Lightning Wallet", 30, (255,165,0), text_x, 30, bold=True, align="left")
-        render_text("Quick & Easy", 30, (255, 255, 255), text_x, lnbits_y, 'gill sans', bold=True, align="left")
-        render_text("1. Visit legend.lnbits.com", 25, (255, 255, 255), text_x, lnbits_y + 40, 'gill sans', align="left")
-        render_text("2. Name and create wallet", 25, (255, 255, 255), text_x, lnbits_y + 80, 'gill sans', align="left")
-        render_text("3. Save website URL of your wallet", 25, (255, 255, 255), text_x, lnbits_y + 120, 'gill sans', align="left")
-        render_text("4. Insert Quarter and enjoy Snakeybits", 25, (255, 255, 255), text_x, lnbits_y + 160, 'gill sans', align="left")
-        render_text("5. At game over, in wallet tap receive and scan QR code", 25, (255, 255, 255), text_x, lnbits_y + 200, 'gill sans', align="left")
+        render_text("How to setup Lightning Wallet", 30, (255,165,0), text_x, 30, bold=True )
+        render_text("Quick & Easy", 30, (255, 255, 255), text_x, lnbits_y, 'gill sans', bold=True )
+        render_text("1. Visit legend.lnbits.com", 25, (255, 255, 255), text_x, lnbits_y + 40, 'gill sans' )
+        render_text("2. Name and create wallet", 25, (255, 255, 255), text_x, lnbits_y + 80, 'gill sans' )
+        render_text("3. Save website URL of your wallet", 25, (255, 255, 255), text_x, lnbits_y + 120, 'gill sans' )
+        render_text("4. Insert Quarter and enjoy Snakeybits", 25, (255, 255, 255), text_x, lnbits_y + 160, 'gill sans' )
+        render_text("5. At game over, in wallet tap receive and scan QR code", 25, (255, 255, 255), text_x, lnbits_y + 200, 'gill sans' )
 
-        render_text("Secure & Functional", 30, (255, 255, 255), text_x, muun_y, 'gill sans', bold=True, align="left")
-        render_text("1. Visit app store on mobile device", 25, (255, 255, 255), text_x, muun_y + 40, 'gill sans', align="left")
-        render_text("2. Download muun lightning wallet", 25, (255, 255, 255), text_x, muun_y + 80, 'gill sans', align="left")
-        render_text("3. Follow steps within muun to setup wallet", 25, (255, 255, 255), text_x, muun_y + 120, 'gill sans', align="left")
-        render_text("4. Keep seed phrase safe", 25, (255, 255, 255), text_x, muun_y + 160, 'gill sans', align="left")
-        render_text("5. Insert quarter and enjoy Snakebits", 25, (255, 255, 255), text_x, muun_y + 200, 'gill sans', align="left")
-        render_text("6. At game over, in wallet tap receive and scan QR code", 25, (255, 255, 255), text_x, muun_y + 240, 'gill sans', align="left")
+        render_text("Secure & Functional", 30, (255, 255, 255), text_x, muun_y, 'gill sans', bold=True )
+        render_text("1. Visit app store on mobile device", 25, (255, 255, 255), text_x, muun_y + 40, 'gill sans' )
+        render_text("2. Download muun lightning wallet", 25, (255, 255, 255), text_x, muun_y + 80, 'gill sans' )
+        render_text("3. Follow steps within muun to setup wallet", 25, (255, 255, 255), text_x, muun_y + 120, 'gill sans' )
+        render_text("4. Keep seed phrase safe", 25, (255, 255, 255), text_x, muun_y + 160, 'gill sans' )
+        render_text("5. Insert quarter and enjoy Snakebits", 25, (255, 255, 255), text_x, muun_y + 200, 'gill sans' )
+        render_text("6. At game over, in wallet tap receive and scan QR code", 25, (255, 255, 255), text_x, muun_y + 240, 'gill sans' )
 
         # Rendering the images
         screen.blit(self.muun_image, (image_x, muun_y))
