@@ -210,11 +210,11 @@ class StartMenuState:
                     btc_price = get_bitcoin_price_in_cad()
                     return GameLoopState(self.highest_score, btc_price)
             elif event.type == BUTTON_2_EVENT:
-                return InstructionsState()
+                return InstructionsState1()
         return self
 
     def update(self): #contains timer for screensaver switch time
-        if pygame.time.get_ticks() - self.last_switch_time_for_state > 10000:  # 3 minutes = 180000 ticks || screensaver switch time
+        if pygame.time.get_ticks() - self.last_switch_time_for_state > 60000:  # 3 minutes = 180000 ticks || screensaver switch time
             scores = self.get_top_scores()
             return ScreensaverState(scores)
         pass
@@ -250,7 +250,7 @@ class StartMenuState:
         render_text('SnakeyBitz', 80, (255, 215, 0), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 50)
         render_text('Insert 25 cents to win Bitcoin', 30, subheader_color, SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 20)  # Adjusted font size
         render_text(f"Credits: {credits}", 30, (255, 255, 255), SCREEN_WIDTH//2, 30, 'gill sans')
-        render_text("First time? Hole White Button for Wallet Instructions", 20, (255, 255, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 60, 'gill sans')
+        render_text("First time? Hold White Button for Wallet Instructions", 20, (255, 255, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 60, 'gill sans')
         render_text("18+ Please Gamble Responsibly", 30, (255, 255, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT - 30, 'gill sans', True)  # Adjusted position
 
      
@@ -296,7 +296,41 @@ class ScreensaverState:
         
     pygame.display.flip()
 
-class InstructionsState:
+class InstructionsState1:
+    def __init__(self):
+        self.joystick_manager = JoystickManager()
+        self.typewriter_text = "BITCOIN"
+        self.typewriter_index = 0
+        self.typewriter_speed = 100  # in milliseconds
+        self.last_typewriter_time = pygame.time.get_ticks()
+
+    def enter_state(self):
+        pass
+
+    def handle_events(self, events):
+        for event in events:
+            self.joystick_manager.handle_joystick_events(events)
+            if event.type in [JOY_LEFT_EVENT, JOY_RIGHT_EVENT, JOY_UP_EVENT, JOY_DOWN_EVENT, BUTTON_1_EVENT, BUTTON_2_EVENT]:
+                return InstructionsState2()
+        return self
+
+    def update(self):
+        current_time = pygame.time.get_ticks()
+        if self.typewriter_index < len(self.typewriter_text) and current_time - self.last_typewriter_time > self.typewriter_speed:
+            self.typewriter_index += 1
+            self.last_typewriter_time = current_time
+        return self
+
+    def render(self):
+        screen.fill((0, 0, 0))  # Clear screen with black
+        render_text("Introducing Snakeybitz", 40, (255, 165, 0), SCREEN_WIDTH / 2, 60, '8-bit', True)
+        render_text("Snakeybitz is a next generation Arcade Video Lottery Game.  ", 30, (255, 255, 255), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 40, "gill sans")
+        render_text(" You play the classic game of snake and collect different colour foods.", 30, (255, 255, 255), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, "gill sans")
+        render_text("It pays out in the toughest money on earth....", 30, (255, 255, 255), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 40, "gill sans" )
+        if self.typewriter_index > 0:
+            render_text(self.typewriter_text[:self.typewriter_index], 45, (255, 255, 255), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 150, '8-bit')
+
+class InstructionsState2:
     def __init__(self):
         self.joystick_manager = JoystickManager()
         self.muun_image = pygame.image.load('muun.png')
@@ -310,7 +344,7 @@ class InstructionsState:
             self.joystick_manager.handle_joystick_events(events)
             # Reset to the start menu on any joystick move or button press.
             if event.type in [JOY_LEFT_EVENT, JOY_RIGHT_EVENT, JOY_UP_EVENT, JOY_DOWN_EVENT, BUTTON_1_EVENT, BUTTON_2_EVENT]:
-                return StartMenuState()
+                return InstructionsState3()
         return self
 
     def update(self):
@@ -318,14 +352,13 @@ class InstructionsState:
 
     def render(self):
         screen.fill((0, 0, 0))  # Clear screen with black
-
-        text_x = SCREEN_WIDTH * 0.2  # 30% of the screen width
+        text_x = SCREEN_WIDTH * 0.35  # 30% of the screen width
         image_x = SCREEN_WIDTH * 0.6  # 75% of the screen width
-        muun_y = 300  # Y-coordinate for the 'Secure & Functional' section
-        lnbits_y = 50  # Y-coordinate for the 'Quick & Easy' section
+        muun_y = 330  # Y-coordinate for the 'Secure & Functional' section
+        lnbits_y = 80  # Y-coordinate for the 'Quick & Easy' section
 
         # Rendering the instructions
-        render_text("How to setup Lightning Wallet", 30, (255,165,0), text_x, 30, bold=True )
+        render_text("How to setup Lightning Wallet", 30, (255,165,0), SCREEN_WIDTH/2 , 30, bold=True )
         render_text("Quick & Easy", 30, (255, 255, 255), text_x, lnbits_y, 'gill sans', bold=True )
         render_text("1. Visit legend.lnbits.com", 25, (255, 255, 255), text_x, lnbits_y + 40, 'gill sans' )
         render_text("2. Name and create wallet", 25, (255, 255, 255), text_x, lnbits_y + 80, 'gill sans' )
@@ -335,15 +368,48 @@ class InstructionsState:
 
         render_text("Secure & Functional", 30, (255, 255, 255), text_x, muun_y, 'gill sans', bold=True )
         render_text("1. Visit app store on mobile device", 25, (255, 255, 255), text_x, muun_y + 40, 'gill sans' )
-        render_text("2. Download muun lightning wallet", 25, (255, 255, 255), text_x, muun_y + 80, 'gill sans' )
-        render_text("3. Follow steps within muun to setup wallet", 25, (255, 255, 255), text_x, muun_y + 120, 'gill sans' )
+        render_text("2. Download 'muun wallet' from app store", 25, (255, 255, 255), text_x, muun_y + 80, 'gill sans' )
+        render_text("3. Follow steps within muun app to setup wallet", 25, (255, 255, 255), text_x, muun_y + 120, 'gill sans' )
         render_text("4. Keep seed phrase safe", 25, (255, 255, 255), text_x, muun_y + 160, 'gill sans' )
         render_text("5. Insert quarter and enjoy Snakebits", 25, (255, 255, 255), text_x, muun_y + 200, 'gill sans' )
         render_text("6. At game over, in wallet tap receive and scan QR code", 25, (255, 255, 255), text_x, muun_y + 240, 'gill sans' )
 
         # Rendering the images
-        screen.blit(self.muun_image, (image_x, muun_y))
-        screen.blit(self.lnbits_image, (image_x, lnbits_y))
+        screen.blit(self.muun_image, (image_x+80, muun_y+40))
+        screen.blit(self.lnbits_image, (image_x, lnbits_y+30))
+
+class InstructionsState3:
+    def __init__(self):
+        self.joystick_manager = JoystickManager()
+
+    def enter_state(self):
+        pass
+
+    def handle_events(self, events):
+        for event in events:
+            self.joystick_manager.handle_joystick_events(events)
+            if event.type in [JOY_LEFT_EVENT, JOY_RIGHT_EVENT, JOY_UP_EVENT, JOY_DOWN_EVENT, BUTTON_1_EVENT, BUTTON_2_EVENT]:
+                return StartMenuState()
+        return self
+
+    def update(self):
+        return self
+
+    def render(self):
+        screen.fill((0, 0, 0))  # Clear screen with black
+        render_text("How to play", 40, (255, 165, 0), SCREEN_WIDTH / 2, 40 ,"8-bit", True)
+        instructions = [
+            "1. Insert Quarter to get a credit. Press Yellow to start game",
+            "2. Move green snake to collect foods",
+            "3. Different colours have different score values",
+            "4. Don't hit your tail or the walls",
+            "5. Gameover? Open wallet and scan QR code",
+            "6. If error in wallet, send picture of GAME ID to support."
+        ]
+        y = 250
+        for line in instructions:
+            render_text(line, 30, (255, 255, 255), SCREEN_WIDTH / 2, y, "gill sans")
+            y += 50
 
 class GameLoopState: 
     def __init__(self, highest_score, btc_price):
