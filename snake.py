@@ -1,5 +1,4 @@
-﻿
-# ────────────────────────────────────────
+﻿# ────────────────────────────────────────
 #   :::::: I M P O R T S : :  :  :  :  :
 # ────────────────────────────────────────
 # WINDOWS UI
@@ -323,10 +322,11 @@ class InstructionsState1:
 
     def render(self):
         screen.fill((0, 0, 0))  # Clear screen with black
-        render_text("Introducing Snakeybitz", 40, (255, 165, 0), SCREEN_WIDTH / 2, 60, '8-bit', True)
-        render_text("Snakeybitz is a next generation Arcade Video Lottery Game.  ", 30, (255, 255, 255), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 40, "gill sans")
-        render_text(" You play the classic game of snake and collect different colour foods.", 30, (255, 255, 255), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, "gill sans")
-        render_text("It pays out in the toughest money on earth....", 30, (255, 255, 255), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 40, "gill sans" )
+        render_text("Introducing SnakeyBitz", 40, (255, 165, 0), SCREEN_WIDTH / 2, 60, '8-bit', True)
+        render_text("SnakeyBitz is a next generation Arcade Video Lottery Game.  ", 30, (255, 255, 255), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 40, "gill sans")
+        render_text("You play the classic game of Snake and collect different colour foods.", 30, (255, 255, 255), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, "gill sans")
+        render_text("It pays out in the toughest money on earth.", 30, (255, 255, 255), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 40, "gill sans" )
+        render_text("press white to continue", 20, (255, 255, 255), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 280, "gill sans" )
         if self.typewriter_index > 0:
             render_text(self.typewriter_text[:self.typewriter_index], 45, (255, 255, 255), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 150, '8-bit')
 
@@ -355,28 +355,27 @@ class InstructionsState2:
         text_x = SCREEN_WIDTH * 0.35  # 30% of the screen width
         image_x = SCREEN_WIDTH * 0.6  # 75% of the screen width
         muun_y = 330  # Y-coordinate for the 'Secure & Functional' section
-        lnbits_y = 80  # Y-coordinate for the 'Quick & Easy' section
+        lnbits_y = 110  # Y-coordinate for the 'Quick & Easy' section
 
         # Rendering the instructions
         render_text("How to setup Lightning Wallet", 30, (255,165,0), SCREEN_WIDTH/2 , 30, bold=True )
         render_text("Quick & Easy", 30, (255, 255, 255), text_x, lnbits_y, 'gill sans', bold=True )
-        render_text("1. Visit legend.lnbits.com", 25, (255, 255, 255), text_x, lnbits_y + 40, 'gill sans' )
-        render_text("2. Name and create wallet", 25, (255, 255, 255), text_x, lnbits_y + 80, 'gill sans' )
-        render_text("3. Save website URL of your wallet", 25, (255, 255, 255), text_x, lnbits_y + 120, 'gill sans' )
-        render_text("4. Insert Quarter and enjoy Snakeybits", 25, (255, 255, 255), text_x, lnbits_y + 160, 'gill sans' )
-        render_text("5. At game over, in wallet tap receive and scan QR code", 25, (255, 255, 255), text_x, lnbits_y + 200, 'gill sans' )
+        render_text("1. Visit Legend.LNbits.com", 25, (255, 255, 255), text_x, lnbits_y + 40, 'gill sans' )
+        render_text("2. Name and create your wallet", 25, (255, 255, 255), text_x, lnbits_y + 80, 'gill sans' )
+        render_text("3. Save website URL of your wallet - this is your key!", 25, (255, 255, 255), text_x, lnbits_y + 120, 'gill sans' )
+        
+
 
         render_text("Secure & Functional", 30, (255, 255, 255), text_x, muun_y, 'gill sans', bold=True )
-        render_text("1. Visit app store on mobile device", 25, (255, 255, 255), text_x, muun_y + 40, 'gill sans' )
+        render_text("1. Visit App Store on mobile device", 25, (255, 255, 255), text_x, muun_y + 40, 'gill sans' )
         render_text("2. Download 'muun wallet' from app store", 25, (255, 255, 255), text_x, muun_y + 80, 'gill sans' )
         render_text("3. Follow steps within muun app to setup wallet", 25, (255, 255, 255), text_x, muun_y + 120, 'gill sans' )
-        render_text("4. Keep seed phrase safe", 25, (255, 255, 255), text_x, muun_y + 160, 'gill sans' )
-        render_text("5. Insert quarter and enjoy Snakebits", 25, (255, 255, 255), text_x, muun_y + 200, 'gill sans' )
-        render_text("6. At game over, in wallet tap receive and scan QR code", 25, (255, 255, 255), text_x, muun_y + 240, 'gill sans' )
+        render_text("4. Keep seed phrase safe, this is your key!", 25, (255, 255, 255), text_x, muun_y + 160, 'gill sans' )
+        render_text("press white to continue", 20, (255, 255, 255), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 280, "gill sans" )
 
         # Rendering the images
-        screen.blit(self.muun_image, (image_x+80, muun_y+40))
-        screen.blit(self.lnbits_image, (image_x, lnbits_y+30))
+        screen.blit(self.muun_image, (image_x+80, muun_y+30))
+        screen.blit(self.lnbits_image, (image_x+30, lnbits_y+30))
 
 class InstructionsState3:
     def __init__(self):
@@ -399,16 +398,17 @@ class InstructionsState3:
         screen.fill((0, 0, 0))  # Clear screen with black
         render_text("How to play", 40, (255, 165, 0), SCREEN_WIDTH / 2, 40 ,"8-bit", True)
         instructions = [
-            "1. Insert Quarter to get a credit. Press Yellow to start game",
+            "1. Insert Quarter to get a credit. Press yellow to start game",
             "2. Move green snake to collect foods",
-            "3. Different colours have different score values",
-            "4. Don't hit your tail or the walls",
+            "3. Different colours have different score values, as seen on bottom panel",
+            "4. Stay away from the edges and do not to strike your tail",
             "5. Gameover? Open wallet and scan QR code",
-            "6. If error in wallet, send picture of GAME ID to support."
+            "6. Wallet error? Provide GAME ID to support with the contacts below right on the machine
+
         ]
         y = 250
         for line in instructions:
-            render_text(line, 30, (255, 255, 255), SCREEN_WIDTH / 2, y, "gill sans")
+            render_text(line, 25, (255, 255, 255), SCREEN_WIDTH / 2, y, "gill sans")
             y += 50
 
 class GameLoopState: 
@@ -453,7 +453,7 @@ class GameLoopState:
         self.colors = np.array(['RED', 'BLUE', 'GREEN', 'YELLOW', 'ORANGE', 'WHITE', 'CYAN', 'PURPLE', 'BROWN', 'GOLD'])
         self.color_matrix = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.chosen_color = np.random.choice(self.colors, p=stdDeviations/np.sum(stdDeviations))
-        self.speed = 20
+        self.speed = 15
 
         self.clock = pygame.time.Clock()
 
@@ -579,7 +579,7 @@ class HighScoreState:
     def handle_events(self, events):
         self.joystick_manager.handle_joystick_events(events)
         for event in events:
-            if event.type == BUTTON_1_EVENT:
+            if event.type == BUTTON_2_EVENT:
                 name = "".join(self._input_text)
                 return GameOverState(self._score, self._color_matrix, self._btc_price, self._counter, name)
             elif event.type in [JOY_LEFT_EVENT, JOY_RIGHT_EVENT, JOY_UP_EVENT, JOY_DOWN_EVENT]:
@@ -605,7 +605,7 @@ class HighScoreState:
         
         # Use centralized text generation function
         render_text('HIGH SCORE', 100, (255, 215, 0), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 220)
-        render_text('Hold Yellow to Continue', 15, (255, 215, 0), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 280)
+        render_text('Press White to Continue', 15, (255, 215, 0), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 280)
         
         input_text_surface = pygame.font.Font(os.path.join("font", "8-BIT WONDER.TTF"), 100).render("".join(self._input_text), True, (255, 255, 255))
         cursor_rect = pygame.Rect(self._input_box_rect.x + self._cursor_pos * 100, self._input_box_rect.y + 5, 2, 100)
